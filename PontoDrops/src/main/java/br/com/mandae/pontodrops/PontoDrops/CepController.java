@@ -2,12 +2,7 @@ package br.com.mandae.pontodrops.PontoDrops;
 
 
 import Response.ResponseResults;
-import br.com.mandae.pontodrops.PontoDrops.Client.CepClient;
-import lombok.AllArgsConstructor;
-import org.apache.coyote.Response;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.openfeign.EnableFeignClients;
-import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,20 +10,29 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
-@EnableFeignClients
-@RequestMapping
+
+import java.net.URISyntaxException;
+
+@RestController
+@RequestMapping("/cep")
 public class CepController {
 
-    @Autowired
-    private CepClient cepClient;
-
-    @GetMapping("/drops")
-    public ResponseEntity<ResponseResults> getCep(@PathVariable String postalcode) {
-
-        ResponseResults responseResults = cepClient.buscaPontoPorCep(postalcode);
-
-        return responseResults != null ? ResponseEntity.ok().body(responseResults) : ResponseEntity.notFound().build();
-    }
+        @Value("${tokenacesso}")
+        private String accessToken;
 
 
+        @GetMapping("/{postalcode}")
+        public ResponseResults consultarDistrito(@PathVariable("postalcode") String postalcode) throws URISyntaxException {
+            RestTemplate restTemplate = new RestTemplate();
+
+            ResponseEntity<ResponseResults> resp =
+                    restTemplate.getForEntity(String.format("https://pudo-api.pontodrops.com.br/businessunits/api/v1/business-units/nearby/%s"
+                            , postalcode) ,ResponseResults.class);
+
+            //HttpHeaders headers = new HttpHeaders();
+            //headers.setBearerAuth(accessToken);
+           // restTemplate.exchange(RequestEntity.get(new URI(url)).headers(headers).build(), returnType);
+
+            return resp.getBody();
+        }
 }
